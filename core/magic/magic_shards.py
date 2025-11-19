@@ -1,6 +1,7 @@
 """
 Magic Shards - Collectible items that give magic power
 """
+import math
 import pygame
 from core.magic.magic_system import MagicType, ShardSize, get_magic_manager
 from utils.load_image import load_image
@@ -78,9 +79,9 @@ class MagicShard(pygame.sprite.Sprite):
         if self.collected:
             return
 
-        # Floating animation
+        # Floating animation (using simple sine wave for pygame 1.9.6 compatibility)
         self.float_offset += self.float_speed
-        float_y = int(5 * pygame.math.Vector2(0, 1).rotate(self.float_offset * 10).y)
+        float_y = int(5 * math.sin(self.float_offset))
         self.rect.y = self.y + float_y
 
         # Glow pulsing effect

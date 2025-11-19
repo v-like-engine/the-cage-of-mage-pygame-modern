@@ -55,21 +55,27 @@ class EnhancedLevelMask(LevelMask):
             result = self.pause_menu.handle_event(event)
             return
 
-        # Base class event handling
+        # Intercept ESC key BEFORE calling super to prevent base class from quitting
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.pause_game()
+            return
+
+        # Intercept K_1 for spell casting to avoid conflict with invisibility
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_1:
+            # Only use for spell if invisibility is already used
+            if self.used_invisible:
+                self._cast_spell(1)
+                return
+            # Otherwise let base class handle it for invisibility
+
+        # Base class event handling (won't see ESC anymore)
         super().handle_event(event)
 
         if event.type == pygame.KEYDOWN:
-            # Override ESC to open pause menu instead of quitting
-            if event.key == pygame.K_ESCAPE:
-                self.pause_game()
-                return
-
-            # Spell casting (keys 1-6)
-            if pygame.K_1 <= event.key <= pygame.K_6:
+            # Spell casting (keys 2-6, and 1 if invisibility not used)
+            if pygame.K_2 <= event.key <= pygame.K_6:
                 slot_num = event.key - pygame.K_0
-                # Only cast spell if not using invisibility (old K_1 behavior)
-                if slot_num != 1 or self.used_invisible:
-                    self._cast_spell(slot_num)
+                self._cast_spell(slot_num)
 
             # Open skill tree directly with T key
             if event.key == pygame.K_t:
@@ -130,8 +136,13 @@ class EnhancedLevelMask(LevelMask):
         if not skill:
             return
 
-        # Use last mouse position as target
-        target_pos = self.last_mouse_pos
+        # Use current mouse position or last known position as target
+        target_pos = pygame.mouse.get_pos()
+        if target_pos == (0, 0) and self.last_mouse_pos != (0, 0):
+            target_pos = self.last_mouse_pos
+        elif target_pos == (0, 0):
+            # Default to right of player if no mouse position
+            target_pos = (self.mage.rect.centerx + 100, self.mage.rect.centery)
 
         # Cast projectile spell
         projectile = SpellCaster.cast_projectile_spell(

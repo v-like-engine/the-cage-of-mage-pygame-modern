@@ -147,15 +147,15 @@ class SandboxLevel(LevelMask):
             result = self.pause_menu.handle_event(event)
             return
 
-        # Base class event handling
+        # Intercept ESC key BEFORE calling super to prevent base class from quitting
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.pause_game()
+            return
+
+        # Base class event handling (won't see ESC anymore)
         super().handle_event(event)
 
         if event.type == pygame.KEYDOWN:
-            # Pause menu
-            if event.key == pygame.K_ESCAPE:
-                self.pause_game()
-                return
-
             # Spell casting (keys 1-6)
             if pygame.K_1 <= event.key <= pygame.K_6:
                 slot_num = event.key - pygame.K_0
